@@ -1,0 +1,34 @@
+{
+  "name": "l3toII",
+  "owner": {
+    "name": "l3toII",
+    "email": "contact@l3toII.dev"
+  },
+  "metadata": {
+    "description": "Workflow plugins for Claude Code - adaptive Git conventions, sprints, stories, and more",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "claude-flow",
+      "source": ".",
+      "description": "Complete development workflow with adaptive Git conventions. Auto-detects repo patterns (GitFlow, GitHub Flow, Jira) and adapts commands accordingly.",
+      "version": "1.0.0",
+      "author": "l3toII",
+      "homepage": "https://github.com/l3toII/claude-flow",
+      "repository": "https://github.com/l3toII/claude-flow",
+      "license": "MIT",
+      "keywords": [
+        "workflow",
+        "git",
+        "gitflow",
+        "github-flow",
+        "jira",
+        "sprint",
+        "agile",
+        "conventional-commits"
+      ],
+      "category": "workflow"
+    }
+  ]
+}
