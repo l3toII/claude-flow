@@ -1,22 +1,47 @@
 {
-  "name": "workflow",
+  "name": "claude-flow",
   "version": "1.0.0",
-  "description": "Complete development workflow with stories, sprints, commits, PRs, releases, and environment management. Includes anti-vibe-code guards to ensure all code is tracked to stories.",
+  "description": "Complete development workflow with adaptive Git conventions, stories, sprints, commits, PRs, releases, and environment management. Auto-detects repo patterns (GitFlow, GitHub Flow, Jira, etc.) and adapts commands accordingly.",
   "author": {
-    "name": "Leto",
-    "url": "https://github.com/leto"
+    "name": "l3toII",
+    "url": "https://github.com/l3toII"
   },
-  "homepage": "https://github.com/leto/claude-workflow",
-  "repository": "https://github.com/leto/claude-workflow",
+  "homepage": "https://github.com/l3toII/claude-flow",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/l3toII/claude-flow.git"
+  },
   "license": "MIT",
   "keywords": [
     "workflow",
     "sprint",
     "backlog",
     "git-flow",
+    "github-flow",
+    "gitflow",
+    "jira",
+    "conventional-commits",
     "release",
     "development",
     "productivity",
-    "agile"
-  ]
+    "agile",
+    "onboarding"
+  ],
+  "categories": [
+    "workflow",
+    "git",
+    "productivity"
+  ],
+  "engines": {
+    "claude-code": ">=1.0.0"
+  },
+  "icon": "icon.png",
+  "screenshots": [
+    "screenshots/onboard.png",
+    "screenshots/workflow.png"
+  ],
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/l3toII"
+  }
 }
