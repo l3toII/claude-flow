@@ -277,11 +277,16 @@ echo "📋 ALLOWED AT ROOT (whitelist):" >&2
 echo "   apps/, project/, engineering/, docs/, .claude/, .git/, .github/" >&2
 echo "   .gitignore, CLAUDE.md, README.md, LICENSE, Makefile, package.json" >&2
 echo "" >&2
+echo "📁 SPECIAL DIRECTORIES IN apps/:" >&2
+echo "   apps/devops/  - Docker, env, scripts" >&2
+echo "   apps/config/  - Shared configs (tsconfig, eslint, prettier)" >&2
+echo "" >&2
 echo "🔧 TO FIX:" >&2
 echo "   1. Move config files to their app: mv tsconfig.json apps/[name]/" >&2
-echo "   2. Move DevOps files: mv Dockerfile apps/devops/docker/" >&2
-echo "   3. Delete regenerables: rm -rf node_modules dist" >&2
-echo "   4. Or run: /onboard to auto-clean" >&2
+echo "   2. Or use shared config: apps/config/typescript/node.json" >&2
+echo "   3. Move DevOps files: mv Dockerfile apps/devops/docker/" >&2
+echo "   4. Delete regenerables: rm -rf node_modules dist" >&2
+echo "   5. Or run: /onboard to auto-clean" >&2
 echo "" >&2
 
 exit 2

@@ -54,6 +54,11 @@ Options:
 mkdir -p apps/devops/docker
 mkdir -p apps/devops/env
 mkdir -p apps/devops/scripts
+
+# Shared config (optional, ask user if multiple apps)
+mkdir -p apps/config/typescript
+mkdir -p apps/config/eslint
+
 mkdir -p project/backlog/functional
 mkdir -p project/backlog/technical
 mkdir -p project/backlog/ux

@@ -74,6 +74,10 @@ mkdir -p apps/devops/docker
 mkdir -p apps/devops/env
 mkdir -p apps/devops/scripts
 
+# Shared config structure (optional but recommended)
+mkdir -p apps/config/typescript
+mkdir -p apps/config/eslint
+
 # Project management structure
 mkdir -p project/backlog/functional
 mkdir -p project/backlog/technical
@@ -446,7 +450,7 @@ Only these files allowed at root:
 
 | File/Folder | Purpose |
 |-------------|---------|
-| `apps/` | All application code + devops |
+| `apps/` | All application code + devops + config |
 | `project/` | Project management (backlog, sprints, vision) |
 | `engineering/` | Technical docs (stack, architecture, decisions) |
 | `docs/` | Public documentation |
@@ -460,15 +464,23 @@ Only these files allowed at root:
 | `Makefile` | Orchestration |
 | `package.json` | Workspace only (NO dependencies) |
 
+### Special Directories in apps/
+
+| Directory | Purpose |
+|-----------|---------|
+| `apps/devops/` | Docker, environment, scripts |
+| `apps/config/` | Shared configs (TypeScript, ESLint, Prettier) |
+| `apps/[name]/` | Application code with its own config |
+
 ### Explicitly FORBIDDEN at root:
 
-| File | Reason |
-|------|--------|
-| `tsconfig.json` | Goes in `apps/[name]/` |
-| `.eslintrc*` | Goes in `apps/[name]/` |
-| `.prettierrc*` | Goes in `apps/[name]/` |
-| `vite.config.*` | Goes in `apps/[name]/` |
-| `tailwind.config.*` | Goes in `apps/[name]/` |
+| File | Where it goes |
+|------|---------------|
+| `tsconfig.json` | `apps/[name]/` or extend `apps/config/typescript/` |
+| `.eslintrc*` | `apps/[name]/` or extend `apps/config/eslint/` |
+| `.prettierrc*` | `apps/[name]/` or link to `apps/config/prettier.json` |
+| `vite.config.*` | `apps/[name]/` |
+| `tailwind.config.*` | `apps/[name]/` |
 | `turbo.json` | Use Makefile instead |
 | `node_modules/` | Should not be committed |
 

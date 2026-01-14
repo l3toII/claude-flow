@@ -208,7 +208,7 @@ project/
 
 | Item | Purpose |
 |------|---------|
-| `apps/` | All application code + devops |
+| `apps/` | All application code + devops + config |
 | `project/` | Project management (backlog, sprints) |
 | `engineering/` | Technical docs (architecture, decisions) |
 | `docs/` | Public documentation |
@@ -224,13 +224,21 @@ project/
 
 **Everything else must be in `apps/` or deleted.**
 
+### Special Directories in apps/
+
+| Directory | Purpose |
+|-----------|---------|
+| `apps/devops/` | Docker, env, scripts |
+| `apps/config/` | Shared configs (TypeScript, ESLint, Prettier presets) |
+| `apps/[name]/` | Application code (extends config presets) |
+
 ## Forbidden at Root
 
 | Item | Where it goes |
 |------|---------------|
-| `tsconfig.json` | `apps/[name]/` |
-| `.eslintrc*` | `apps/[name]/` |
-| `.prettierrc*` | `apps/[name]/` |
+| `tsconfig.json` | `apps/[name]/` (extends `apps/config/typescript/`) |
+| `.eslintrc*` | `apps/[name]/` (extends `apps/config/eslint/`) |
+| `.prettierrc*` | `apps/[name]/` (links to `apps/config/prettier.json`) |
 | `vite.config.*` | `apps/[name]/` |
 | `tailwind.config.*` | `apps/[name]/` |
 | `turbo.json` | DELETE (use Makefile) |
@@ -258,6 +266,42 @@ up:    cd apps/devops/docker && docker-compose up -d
 down:  cd apps/devops/docker && docker-compose down
 logs:  cd apps/devops/docker && docker-compose logs -f $(app)
 setup: ./apps/devops/scripts/setup.sh
+```
+
+## apps/config/ Role
+
+Shared configuration presets:
+
+| Directory | Purpose |
+|-----------|---------|
+| `typescript/` | TypeScript presets (base, node, react, library) |
+| `eslint/` | ESLint presets (base, node, react, typescript) |
+| `prettier.json` | Single Prettier config |
+
+**Usage pattern:**
+
+```json
+// apps/api/tsconfig.json
+{
+  "extends": "../config/typescript/node.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  }
+}
+```
+
+```javascript
+// apps/api/.eslintrc.cjs
+module.exports = {
+  extends: [
+    '../config/eslint/node.cjs',
+    '../config/eslint/typescript.cjs',
+  ],
+  parserOptions: {
+    project: './tsconfig.json',
+  },
+};
 ```
 
 ## Data Flow

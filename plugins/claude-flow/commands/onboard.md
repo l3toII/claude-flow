@@ -121,7 +121,7 @@ For each file/folder at root, categorize:
 | Category | Examples | Default Action |
 |----------|----------|----------------|
 | **CODE** | `src/`, `lib/`, `*.ts`, `*.js`, `*.py` | → Move to `apps/[name]/` |
-| **CONFIG-APP** | `tsconfig.json`, `.eslintrc*`, `.prettierrc*`, `jest.config.*`, `vite.config.*`, `tailwind.config.*`, `postcss.config.*`, `next.config.*`, `babel.config.*` | → Move with code to `apps/[name]/` |
+| **CONFIG-APP** | `tsconfig.json`, `.eslintrc*`, `.prettierrc*`, `jest.config.*`, `vite.config.*`, `tailwind.config.*`, `postcss.config.*`, `next.config.*`, `babel.config.*` | → Move with code to `apps/[name]/` (can extend `apps/config/`) |
 | **CONFIG-DEVOPS** | `Dockerfile*`, `docker-compose.*`, `.env*` | → Move to `apps/devops/` |
 | **CONFIG-MONOREPO** | `turbo.json`, `nx.json`, `lerna.json`, `pnpm-workspace.yaml` | → DELETE (use Makefile) |
 | **DEPS** | `node_modules/`, `*.lock`, `.pnpm-store/`, `.yarn/` | → Delete (regenerable) |
@@ -234,6 +234,10 @@ Your choice?
 mkdir -p apps/devops/docker
 mkdir -p apps/devops/env
 mkdir -p apps/devops/scripts
+
+# Create shared config structure (optional, ask user)
+mkdir -p apps/config/typescript
+mkdir -p apps/config/eslint
 
 # Create project management structure
 mkdir -p project/backlog/functional
@@ -741,8 +745,12 @@ Root (whitelist only):
 ├── ❌ node_modules/
 └── ❌ Any other config file
 
-Apps:
+Apps Structure:
 ├── ✅ apps/devops/ (docker, env, scripts)
+├── ✅ apps/config/ (shared configs - optional)
+│   ├── typescript/ (base.json, node.json, react.json)
+│   ├── eslint/ (base.cjs, node.cjs, react.cjs)
+│   └── prettier.json
 ├── ✅ apps/[name]/ (with its own config files)
 └── ✅ Each app has: package.json, README.md, tsconfig.json (if TS)
 ```
@@ -836,3 +844,63 @@ git push -u origin tech/onboard-workflow
 | Scripts | `scripts/` | Automation (setup, deploy) |
 | CI/CD configs | Here or `.github/` | Pipelines |
 | Terraform/K8s | `infra/` (optional) | Cloud infrastructure |
+
+---
+
+## apps/config/ Structure (Optional)
+
+Shared configuration presets for consistency across apps:
+
+```
+apps/config/
+├── typescript/
+│   ├── base.json           # Common rules (strict, esModule, etc.)
+│   ├── node.json           # Node.js preset (extends base)
+│   ├── react.json          # React preset (extends base)
+│   └── library.json        # Library preset (extends base)
+├── eslint/
+│   ├── base.cjs            # Common ESLint rules
+│   ├── node.cjs            # Node.js preset (extends base)
+│   ├── react.cjs           # React preset (extends base)
+│   └── typescript.cjs      # TypeScript rules (combine with others)
+├── prettier.json           # Single Prettier config
+└── README.md               # Usage documentation
+```
+
+### Usage in Apps
+
+**apps/api/tsconfig.json:**
+```json
+{
+  "extends": "../config/typescript/node.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  }
+}
+```
+
+**apps/web/.eslintrc.cjs:**
+```javascript
+module.exports = {
+  extends: [
+    '../config/eslint/react.cjs',
+    '../config/eslint/typescript.cjs',
+  ],
+  parserOptions: {
+    project: './tsconfig.json',
+  },
+};
+```
+
+**apps/api/.prettierrc:**
+```json
+"../config/prettier.json"
+```
+
+### Benefits
+
+- **DRY**: Common rules defined once
+- **Consistency**: All apps share same base rules
+- **Flexibility**: Apps can override specific rules
+- **Maintenance**: Update one file, all apps benefit
