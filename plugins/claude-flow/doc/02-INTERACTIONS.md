@@ -14,61 +14,61 @@ Complete user flows and command interactions.
 
 **Purpose**: Set up a new project with full workflow structure.
 
+**Execution**: Delegates to `init-agent` via `context: fork`.
+
 **Flow**:
 ```
 User: /init
 
-Claude: [Creates branch: tech/init-project]
-        "Let's initialize your project.
-        What is the project name and vision?"
-
-User: "TaskFlow - a task management app for teams"
-
-Claude: [Creates structure]
-        [Asks about personas]
-        [Asks about UX direction]
-        [Identifies V1 stories]
-        [Creates sprint plan]
-        [Asks about tech stack]
-        [Generates files]
-        [Commits on tech/init-project]
-        [Creates PR → main]
+Agent: [Creates branch: tech/init-project]
+       [Asks about project name and vision]
+       [Asks about personas]
+       [Asks about UX direction]
+       [Identifies V1 stories]
+       [Creates sprint plan]
+       [Asks about tech stack]
+       [Generates all files]
+       [Commits and creates PR]
 
 Output:
 ├── apps/
-│   └── devops/ (docker, env, scripts)
+│   ├── devops/ (docker, env, scripts)
+│   └── [first-app]/
 ├── project/
 │   ├── vision.md
 │   ├── personas.md
 │   ├── ux.md
-│   ├── backlog/functional/US-001.md ... US-012.md
+│   ├── backlog/
+│   │   ├── functional/US-001.md ... US-012.md
+│   │   ├── technical/
+│   │   └── ux/
 │   └── sprints/SPRINT-001.md
 ├── engineering/
 │   ├── stack.md
 │   ├── architecture.md
 │   └── decisions/
 ├── docs/
+├── .claude/
 ├── .gitignore
 ├── CLAUDE.md
 ├── Makefile
-└── package.json (workspace only, NO deps)
+└── package.json (workspace only)
 
 Branch: tech/init-project → main (PR)
 ```
-
-> ⚠️ Changes are on a dedicated branch. Merge the PR after reviewing the structure.
-> 🐳 apps/devops/ is always created with Docker, env, and scripts folders.
 
 ---
 
 ### /onboard - Onboard Existing Project
 
-**Purpose**: Transform existing codebase into clean workflow structure (identical to /init result).
+**Purpose**: Transform existing codebase into clean workflow structure.
+
+**Execution**: Delegates to `onboard-agent` via `context: fork`.
 
 **Usage**:
 ```bash
 /onboard              # Standard onboarding
-/onboard --full       # Full onboarding with backlog generation
+/onboard --full       # With backlog generation
 ```
 
 **Core Principle**: Whitelist approach - only specific files allowed at root.
@@ -77,64 +77,27 @@ Branch: tech/init-project → main (PR)
 ```
 User: /onboard
 
-Claude: [Creates branch: tech/onboard-workflow]
+Agent: [Creates branch: tech/onboard-workflow]
+       [Scans root and categorizes files]
+       [Shows cleanup report]
+       [Asks for confirmation]
+       [Executes cleanup]
+       [Reconciles documents with code]
+       [Detects multi-git setups]
+       [Creates workflow structure]
+       [Commits and creates PR]
 
-        "🔍 ROOT CLEANUP REPORT
-
-         ✅ WHITELIST (keep): .git/, README.md, LICENSE, .github/
-
-         🚚 CODE → apps/core/: src/, lib/, index.ts
-         ⚙️ CONFIG-APP → apps/core/: tsconfig.json, .eslintrc, .prettierrc, vite.config.ts
-         🐳 DEVOPS → apps/devops/: Dockerfile, docker-compose.yml, .env*
-         🗑️ DELETE (monorepo): turbo.json, pnpm-workspace.yaml
-         🗑️ DELETE (regenerable): node_modules/, package-lock.json, dist/
-         📦 ARCHIVE → docs/archive/: CHANGELOG.md
-
-         1. AUTO-CLEAN (recommended)
-         2. REVIEW ONE BY ONE
-         3. SKIP"
-
-User: "1"
-
-Claude: [Creates apps/devops/ structure]
-        [Moves code to apps/core/]
-        [Moves Docker/.env to apps/devops/]
-        [Deletes node_modules/]
-        [Archives old docs]
-        [Creates workflow docs from analysis]
-        [Commits on tech/onboard-workflow]
-        [Creates PR → main]
-
-Output (CLEAN pilot repo):
-├── apps/
-│   ├── devops/ (docker/, env/, scripts/)
-│   ├── core/ (moved from root, with tsconfig, eslint, etc.)
-│   └── api/
-├── project/ (vision, personas, ux, backlog/, sprints/)
-├── engineering/ (stack, architecture, decisions/)
-├── docs/ (public docs, archive/)
-├── .claude/
-├── .gitignore
-├── CLAUDE.md
-├── README.md
-├── Makefile
-└── package.json (workspace only, NO deps)
+Cleanup Categories:
+├── ✅ WHITELIST (keep): .git/, README.md, LICENSE
+├── 🚚 CODE → apps/[name]/: src/, lib/, index.ts
+├── ⚙️ CONFIG → apps/[name]/: tsconfig, eslint, prettier
+├── 🐳 DEVOPS → apps/devops/: Dockerfile, docker-compose, .env
+├── 🗑️ DELETE (monorepo tools): turbo.json, nx.json
+├── 🗑️ DELETE (regenerable): node_modules/, locks, dist/
+└── 📦 ARCHIVE → docs/archive/: CHANGELOG.md
 
 Branch: tech/onboard-workflow → main (PR)
 ```
-
-**Key Rules**:
-- ✅ Whitelist approach: only allowed files stay at root
-- 🐳 DevOps files → apps/devops/ (Docker, .env, scripts)
-- 🚚 Code files → apps/[name]/
-- ⚙️ Config files → apps/[name]/ (tsconfig, eslint, prettier, vite, etc.)
-- 🗑️ Regenerable files deleted (node_modules, locks, dist)
-- 🗑️ Monorepo tools deleted (turbo.json, nx.json - use Makefile)
-- 📁 Legacy docs archived to docs/archive/
-- ⚠️ User confirmation MANDATORY for all actions
-- 🎯 End result identical to fresh /init
-
-> ⚠️ Review carefully - structural changes included.
 
 ---
 
@@ -159,7 +122,7 @@ Claude: [Determines type: User Story]
         [Creates US-042-oauth-login.md]
         [Updates backlog index]
 
-Output: docs/backlog/functional/US-042-oauth-login.md
+Output: project/backlog/functional/US-042-oauth-login.md
 ```
 
 ---
@@ -189,7 +152,7 @@ Claude: [Shows Ready stories]
 
 User: "42, 43, 44"
 
-Claude: [Creates SPRINT-004.md]
+Claude: [Creates SPRINT-004.md in project/sprints/]
         [Sets stories to sprint]
         [Creates GitHub milestone]
 ```
@@ -211,18 +174,21 @@ Claude: [Creates SPRINT-004.md]
 ```
 User: /work #42
 
-Claude: [Reads US-042 from backlog]
-        [Creates branch: feature/#42-oauth-login]
-        [Updates session.json]
+Claude: [Gets repo conventions]
+        [Reads US-042 from project/backlog/]
+        [Creates branch using repo pattern]
+        [Updates .claude/session.json]
         [Shows acceptance criteria]
 
         "Ready to work on US-042: OAuth Login
+
+         Branch: feature/#42-oauth-login
+         Convention: conventional (auto-detected)
 
          Acceptance Criteria:
          □ User can click 'Login with Google'
          □ OAuth flow completes successfully
          □ User session is created
-         □ Profile shows Google avatar
 
          Suggested approach:
          1. Add GoogleAuthService
@@ -247,18 +213,16 @@ Claude: [Reads US-042 from backlog]
 ```
 User: /done
 
-Claude: [Runs: make lint-api && make test-api]
+Claude: [Gets repo conventions]
+        [Runs: make lint && make test]
         ✅ Lint passed
         ✅ Tests passed (47/47)
 
-        [Applies commit-conventions skill]
-        [Generates: feat(auth): add OAuth login (#42)]
-
+        [Generates commit using repo's format]
         [Commits and pushes]
         ✅ Committed: feat(auth): add OAuth login (#42)
 
-        [Applies pr-template skill]
-        [Creates PR via gh]
+        [Creates PR to correct base branch]
         ✅ PR #123 created
 
         [Updates story status]
@@ -267,7 +231,8 @@ Claude: [Runs: make lint-api && make test-api]
         "Work completed!
          📝 Commit: feat(auth): add OAuth login (#42)
          🔗 PR #123: https://github.com/.../pull/123
-         📋 Story US-042 now in Review"
+         📋 Story US-042 now in Review
+         🔧 Convention: conventional (configured)"
 ```
 
 ---
@@ -360,13 +325,6 @@ Claude: [Runs: cd apps/devops/docker && docker-compose up -d]
          Use '/env local down' to stop"
 ```
 
-**Makefile Integration**:
-```bash
-make up       # → cd apps/devops/docker && docker-compose up -d
-make down     # → cd apps/devops/docker && docker-compose down
-make logs     # → cd apps/devops/docker && docker-compose logs -f
-```
-
 ---
 
 ### /status - Project Status
@@ -392,6 +350,49 @@ make logs     # → cd apps/devops/docker && docker-compose logs -f
 └── #120 Session fix - Approved ✅
 
 ⚠️ Technical Debt: 6/10
+```
+
+---
+
+### /dashboard - Visual Dashboard
+
+**Purpose**: Show visual project overview with apps, environments, sprint status.
+
+**Output**:
+```
+╔══════════════════════════════════════════════════════════════════════╗
+║  📊 PROJECT DASHBOARD                                                 ║
+╠══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║  📦 APPS                                                              ║
+║  ─────────────────────────────────────────────────────────────────── ║
+║  APP      GIT         BRANCH              STATUS                      ║
+║  api      monorepo    feature/#42-auth    ✅ ok (3 ahead)            ║
+║  web      monorepo    main                ✅ ok                       ║
+║  devops   monorepo    main                ✅ ok                       ║
+║                                                                       ║
+║  🏃 SPRINT                                                            ║
+║  ─────────────────────────────────────────────────────────────────── ║
+║  SPRINT-003 (Day 5/10)  [████████░░░░] 60%                           ║
+║  Done: 5 │ Review: 1 │ In Progress: 2 │ To Do: 2                      ║
+║                                                                       ║
+╚══════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+### /apps - Apps Management
+
+**Purpose**: Manage apps in monorepo, including multi-git configurations.
+
+**Usage**:
+```bash
+/apps                    # List all apps with status
+/apps status             # Detailed status
+/apps status api         # Specific app status
+/apps init [name]        # Initialize new app
+/apps git [app] [action] # Manage git per app
+/apps check              # Verify all apps configured
 ```
 
 ---
@@ -463,7 +464,7 @@ Run /sync --fix to auto-fix.
 User: /bye
 
 Claude: [Checks uncommitted changes]
-        [Saves session.json]
+        [Saves .claude/session.json]
 
         "Session Summary
          Duration: 2h 15m
@@ -474,8 +475,10 @@ Claude: [Checks uncommitted changes]
          1. Check PR feedback
          2. Continue US-043
 
-         See you! 👋"
+         See you!"
 ```
+
+---
 
 ## Guard Interactions
 
@@ -495,6 +498,43 @@ Claude: "❌ BLOCKED: Code modified without ticket
          1. /story 'Add payments'
          2. /work #XX
          3. Create poc/ branch for exploration"
+```
+
+### Root Whitelist Guard (Blocking)
+
+```
+User: [Tries to commit with tsconfig.json at root]
+
+Hook: validate-root-whitelist.sh
+      Exit code: 2
+
+Claude: "❌ ROOT WHITELIST VIOLATION - COMMIT BLOCKED
+
+         🚫 FORBIDDEN FILES AT ROOT:
+         ├── tsconfig.json  →  apps/[name]/tsconfig.json
+
+         🔧 TO FIX:
+         1. Move config files to their app
+         2. Or run: /onboard to auto-clean"
+```
+
+### Secret Warning (Non-blocking)
+
+```
+User: [Writes file containing API key pattern]
+
+Hook: guard-secrets.sh
+      Exit code: 0 (warning only)
+
+Claude: "⚠️ POTENTIAL SECRET DETECTED
+         File: apps/api/src/config.ts
+         Detected: AWS Access Key pattern
+
+         💡 RECOMMENDATIONS:
+         • Use environment variables
+         • Store secrets in apps/devops/env/.env
+
+         ⚠️ This is a WARNING - operation proceeds."
 ```
 
 ### Merge Guard (Blocking)
