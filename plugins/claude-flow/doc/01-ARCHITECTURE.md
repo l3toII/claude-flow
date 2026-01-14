@@ -5,52 +5,42 @@ Technical architecture of the Claude Workflow plugin.
 ## Plugin Structure
 
 ```
-claude-workflow/
+claude-flow/
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest
-├── commands/                 # 15 slash commands
-│   ├── init.md
+├── commands/                 # Slash commands
+│   ├── init.md              # Project initialization
+│   ├── onboard.md           # Existing project onboarding
 │   ├── story.md
 │   ├── sprint.md
 │   ├── work.md
-│   ├── done.md              # Key workflow command
+│   ├── done.md
 │   ├── commit.md
 │   ├── pr.md
 │   ├── release.md
-│   ├── env.md
+│   ├── env.md               # Environment management
 │   ├── status.md
 │   ├── sync.md
 │   ├── debt.md
 │   ├── decision.md
 │   ├── ux.md
 │   └── bye.md
-├── agents/                   # 5 complex task agents
+├── agents/                   # Complex task agents
 │   ├── init-agent.md
 │   ├── release-agent.md
 │   ├── review-agent.md
 │   ├── sync-agent.md
 │   └── migration-agent.md
-├── skills/                   # 20 knowledge skills
+├── skills/                   # Knowledge skills
 │   ├── commit-conventions/
 │   ├── pr-template/
 │   ├── story-format/
 │   ├── git-flow/
+│   ├── repo-conventions/
 │   ├── code-conventions/
-│   ├── test-patterns/
 │   ├── design-principles/
-│   ├── deploy-platforms/
 │   ├── github-patterns/
-│   ├── session-management/
-│   ├── project-structure/
-│   ├── sprint-management/
-│   ├── debt-tracking/
-│   ├── decision-tracking/
-│   ├── changelog-format/
-│   ├── release-process/
-│   ├── env-config/
-│   ├── sync-rules/
-│   ├── ux-personas/
-│   └── ux-journeys/
+│   └── session-management/
 ├── hooks/
 │   └── hooks.json           # Auto-merge hooks config
 ├── scripts/                  # Hook scripts
@@ -58,8 +48,9 @@ claude-workflow/
 │   ├── session-save.sh
 │   ├── guard-story-exists.sh
 │   ├── guard-branch-check.sh
+│   ├── detect-git-conventions.sh
 │   └── post-edit-format.sh
-└── docs/
+└── doc/
     ├── 00-FOUNDATIONS.md
     ├── 01-ARCHITECTURE.md
     └── 02-INTERACTIONS.md
@@ -150,30 +141,96 @@ Hooks run automatically on specific events:
 
 ## Project Structure (Generated)
 
-When `/init` runs, it creates:
+When `/init` or `/onboard` runs, it creates:
 
 ```
 project/
+├── apps/
+│   ├── devops/                  # DevOps configuration
+│   │   ├── docker/
+│   │   │   ├── docker-compose.yml
+│   │   │   ├── docker-compose.dev.yml
+│   │   │   └── docker-compose.prod.yml
+│   │   ├── env/
+│   │   │   ├── .env.example
+│   │   │   └── .env.dev
+│   │   ├── scripts/
+│   │   │   ├── setup.sh
+│   │   │   └── deploy.sh
+│   │   └── README.md
+│   ├── api/                     # Backend app
+│   │   ├── src/
+│   │   ├── package.json
+│   │   ├── Dockerfile
+│   │   └── README.md
+│   └── web/                     # Frontend app
+│       ├── src/
+│       ├── package.json
+│       ├── Dockerfile
+│       └── README.md
 ├── docs/
 │   ├── backlog/
-│   │   ├── functional/      # US-XXX stories
-│   │   ├── technical/       # TS-XXX stories
-│   │   └── ux/              # UX-XXX stories
-│   ├── sprints/             # SPRINT-XXX files
+│   │   ├── functional/          # US-XXX stories
+│   │   ├── technical/           # TS-XXX stories
+│   │   └── ux/                  # UX-XXX stories
+│   ├── sprints/                 # SPRINT-XXX files
 │   ├── PROJECT.md
 │   ├── PERSONAS.md
 │   ├── UX.md
 │   ├── STACK.md
 │   └── ARCHITECTURE.md
 ├── records/
-│   └── decisions/           # ADRs and decisions
-├── apps/                    # Application code
+│   └── decisions/               # ADRs
 ├── .claude/
-│   ├── session.json         # Session state
-│   └── environments.json    # Environment config
-├── CLAUDE.md                # Entry point for Claude
-├── Makefile
-└── README.md
+│   ├── session.json             # Session state
+│   ├── environments.json        # Environment config
+│   └── repos.json               # Git conventions
+├── .gitignore
+├── CLAUDE.md                    # Entry point
+├── README.md
+├── Makefile                     # Orchestration
+└── package.json                 # Workspace only
+```
+
+## Root Whitelist
+
+**ONLY these files/folders allowed at root:**
+
+| Item | Purpose |
+|------|---------|
+| `apps/` | All application code + devops |
+| `docs/` | Documentation |
+| `records/` | Decision records |
+| `.claude/` | Plugin config |
+| `.git/` | Git repository |
+| `.gitignore` | Git ignore |
+| `.github/` | CI/CD (optional) |
+| `CLAUDE.md` | Entry point |
+| `README.md` | Overview |
+| `LICENSE` | License |
+| `Makefile` | Orchestration |
+| `package.json` | Workspace only |
+
+**Everything else must be in `apps/` or deleted.**
+
+## apps/devops/ Role
+
+Central DevOps management:
+
+| Directory | Purpose |
+|-----------|---------|
+| `docker/` | Docker Compose files |
+| `env/` | Environment variables |
+| `scripts/` | Automation scripts |
+| `infra/` | Terraform/K8s (optional) |
+
+**Integration with Makefile:**
+
+```makefile
+up:    cd apps/devops/docker && docker-compose up -d
+down:  cd apps/devops/docker && docker-compose down
+logs:  cd apps/devops/docker && docker-compose logs -f $(app)
+setup: ./apps/devops/scripts/setup.sh
 ```
 
 ## Data Flow
@@ -208,12 +265,6 @@ project/
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                 HOOK: PostToolUse                           │
-│            post-edit-format.sh auto-formats                 │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
 │                      USER INPUT                             │
 │                        /done                                │
 └─────────────────────────────────────────────────────────────┘
@@ -230,12 +281,44 @@ project/
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Environment Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LOCAL DEVELOPMENT                        │
+│                   /env local (or make up)                   │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│              apps/devops/docker/docker-compose.yml          │
+│  - Starts api, web, db containers                           │
+│  - Uses apps/devops/env/.env                                │
+│  - Mounts app source for hot reload                         │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     DEPLOYMENT                              │
+│                /env deploy api staging                      │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│            Platform CLI (Railway, Vercel, Fly.io)           │
+│  - Reads .claude/environments.json                          │
+│  - Deploys to configured service                            │
+│  - Production requires confirmation                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ## Technical Validation
 
-| Component | Status | Evidence |
-|-----------|--------|----------|
+| Component | Status | Notes |
+|-----------|--------|-------|
 | Hooks auto-merge | ✅ Works | Official docs |
 | `${CLAUDE_PLUGIN_ROOT}` | ✅ Works | Variable available |
 | Exit code 2 blocks | ✅ Works | Official docs |
-| Skills auto-invoke | ⚠️ 50-84% | Community tests |
+| Skills auto-invoke | ⚠️ 50-84% | Command invocation preferred |
 | Commands orchestrate | ✅ Reliable | Best practice |
+| apps/devops/ pattern | ✅ Adopted | Centralized DevOps |

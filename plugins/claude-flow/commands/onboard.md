@@ -1,12 +1,12 @@
 ---
-description: Onboard an existing project into the workflow. Cleans pilot repo, validates sub-repos, and creates workflow structure identical to /init.
+description: Onboard an existing project into the workflow. Cleans pilot repo with whitelist approach, creates apps/devops/, and produces structure identical to /init.
 argument-hint: [--full]
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion
 ---
 
 # /onboard - Onboard Existing Project
 
-**Transform an existing codebase** into a clean claude-flow project, as close as possible to a fresh `/init`.
+**Transform an existing codebase** into a clean claude-flow project, identical to a fresh `/init`.
 
 ## Usage
 
@@ -15,16 +15,39 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Task, AskUserQuestion
 /onboard --full       # Full onboarding with backlog generation
 ```
 
-## Core Principle
+## Core Principles
 
-> ⚠️ **The pilot repo must be CLEAN** - documentation and workflow only.
-> All code lives in `apps/` (one app per sub-directory).
+> ⚠️ **WHITELIST APPROACH**: Only files in the whitelist stay at root. Everything else must be moved or deleted.
+
+> 🎯 **apps/devops/**: All DevOps files (Docker, .env, scripts) go in `apps/devops/`
+
+---
+
+## ROOT WHITELIST (Strict)
+
+**ONLY these files/folders are allowed at root:**
+
+```
+✅ ALLOWED AT ROOT:
+├── apps/                    # All application code
+├── docs/                    # Workflow documentation
+├── records/                 # Decision records
+├── .claude/                 # Plugin configuration
+├── .git/                    # Git repository
+├── .gitignore               # Git ignore rules
+├── .github/                 # GitHub workflows (optional)
+├── CLAUDE.md                # Entry point for Claude
+├── README.md                # Project overview
+├── LICENSE                  # License file
+├── Makefile                 # Root orchestration commands
+└── package.json             # Workspace only (no dependencies)
+
+❌ EVERYTHING ELSE MUST BE MOVED OR DELETED
+```
 
 ---
 
 ## Phase 0: Create Dedicated Branch
-
-> ⚠️ **MANDATORY**: All onboarding changes MUST be done on a dedicated branch.
 
 ```bash
 git status
@@ -33,231 +56,374 @@ git checkout -b tech/onboard-workflow
 
 ---
 
-## Phase 1: Pilot Repo Audit
+## Phase 1: Full Root Scan & Categorization
 
-### 1.1 Identify Structure Type
-
-Determine if this is:
-- **Monorepo**: Has `apps/` with multiple sub-applications
-- **Single repo**: All code in root (needs restructuring)
-- **Already clean**: Only docs, no code at root
-
-### 1.2 Scan for Violations
-
-**The pilot repo (root) must NOT contain:**
+### 1.1 Scan Everything at Root
 
 ```bash
-# Check for code files at root level
-ls -la *.ts *.js *.py *.go *.rs *.java 2>/dev/null
-ls -la src/ lib/ 2>/dev/null
-
-# Check for package files at root (except workspace root)
-ls -la package.json Cargo.toml pyproject.toml go.mod 2>/dev/null
+# List ALL files and folders at root
+ls -la
+ls -la .*  # Hidden files too
 ```
 
-**Report violations:**
-```
-🔍 Pilot Repo Audit
+### 1.2 Categorize Each Item
 
-❌ VIOLATIONS FOUND:
-├── src/index.ts (code at root)
-├── package.json (package file - not workspace)
-├── lib/ (code directory)
-└── utils.py (code at root)
+For each file/folder at root, categorize:
 
-These files should be in apps/[name]/.
-```
+| Category | Examples | Default Action |
+|----------|----------|----------------|
+| **CODE** | `src/`, `lib/`, `*.ts`, `*.js`, `*.py` | → Move to `apps/[name]/` |
+| **CONFIG-APP** | `tsconfig.json`, `.eslintrc`, `jest.config.*` | → Move with code to `apps/[name]/` |
+| **CONFIG-DEVOPS** | `Dockerfile`, `docker-compose.*`, `.env*` | → Move to `apps/devops/` |
+| **DEPS** | `node_modules/`, `*.lock`, `.pnpm-store/` | → Delete (regenerable) |
+| **CI/CD** | `.github/`, `.gitlab-ci.yml` | → Keep or move to `apps/devops/` |
+| **DOCS-LEGACY** | `CHANGELOG.md`, `CONTRIBUTING.md`, `*.md` | → Archive to `docs/archive/` |
+| **WHITELIST** | `README.md`, `LICENSE`, `.gitignore` | → Keep |
+| **UNKNOWN** | Anything else | → Ask user |
 
-### 1.3 User Confirmation Required
-
-> ⚠️ **MANDATORY**: Use AskUserQuestion before ANY cleanup
-
-```
-⚠️ CLEANUP REQUIRED
-
-The pilot repo contains code that should be in apps/.
-
-Options:
-1. Move to apps/[name]/ - Relocate code to new app
-2. Delete - If obsolete/not needed
-3. Skip - Keep as-is (NOT RECOMMENDED)
-
-Please confirm for each item.
-```
-
-**NEVER delete or move files without explicit user confirmation.**
-
----
-
-## Phase 2: Apps Validation
-
-### 2.1 Identify Apps
-
-```bash
-# Find apps
-ls -d apps/*/ 2>/dev/null
-```
-
-### 2.2 Validate Each App
-
-For each app in `apps/`, check:
-
-```bash
-# Must have package file
-ls apps/*/package.json apps/*/Cargo.toml apps/*/pyproject.toml 2>/dev/null
-```
-
-### 2.3 Missing .git in Apps
-
-If apps should be independent repos (user preference):
-
-> ⚠️ **MANDATORY**: Ask user before creating .git
+### 1.3 Generate Cleanup Report
 
 ```
-📦 App: apps/api/
+🔍 ROOT CLEANUP REPORT
 
-This app has no .git directory.
+📁 Scanned: 34 items at root
 
-Options:
-1. Initialize git (git init) - Make it an independent repo
-2. Keep as monorepo subfolder - No separate git
+✅ WHITELIST (keep as-is): 4 items
+├── .git/
+├── .gitignore
+├── README.md
+└── LICENSE
+
+🚚 CODE → apps/[name]/: 3 items
+├── src/ (→ apps/core/)
+├── lib/ (→ apps/core/)
+└── index.ts (→ apps/core/)
+
+🐳 DEVOPS → apps/devops/: 6 items
+├── Dockerfile
+├── docker-compose.yml
+├── docker-compose.dev.yml
+├── .env
+├── .env.example
+└── .env.local
+
+⚙️ CONFIG → move with code: 4 items
+├── tsconfig.json (→ apps/core/)
+├── .eslintrc.js (→ apps/core/)
+├── jest.config.js (→ apps/core/)
+└── vite.config.ts (→ apps/core/)
+
+🗑️ DEPS → delete (regenerable): 3 items
+├── node_modules/
+├── package-lock.json
+└── .pnpm-store/
+
+📦 ARCHIVE → docs/archive/: 2 items
+├── CHANGELOG.md
+└── old-notes.md
+
+❓ UNKNOWN → need decision: 2 items
+├── random-file.txt
+└── temp/
+
+─────────────────────────────────
+Total actions: 24 items to process
+```
+
+### 1.4 User Confirmation (MANDATORY)
+
+> ⚠️ **MUST use AskUserQuestion before ANY action**
+
+```
+⚠️ CLEANUP CONFIRMATION REQUIRED
+
+I've categorized 34 items. Proposed actions:
+
+1. AUTO-CLEAN (recommended):
+   - Move code to apps/core/
+   - Move DevOps to apps/devops/
+   - Delete node_modules/ and lock files
+   - Archive old docs
+
+2. REVIEW ONE BY ONE:
+   - Confirm each item individually
+
+3. SKIP CLEANUP:
+   - Not recommended - pilot repo will remain dirty
 
 Your choice?
 ```
 
-If user chooses to initialize:
+**If user chooses "REVIEW ONE BY ONE"**, ask for each category:
+- Code destination app name
+- Which DevOps files to keep
+- Which docs to archive vs delete
+- What to do with unknown files
+
+---
+
+## Phase 2: Execute Cleanup
+
+### 2.1 Create Target Structure
+
 ```bash
-cd apps/api
-git init
-git add .
-git commit -m "chore: initialize app repo"
-cd ../..
+# Create apps structure
+mkdir -p apps/devops/docker
+mkdir -p apps/devops/env
+mkdir -p apps/devops/scripts
+
+# Create docs structure
+mkdir -p docs/backlog/functional
+mkdir -p docs/backlog/technical
+mkdir -p docs/backlog/ux
+mkdir -p docs/sprints
+mkdir -p docs/architecture
+mkdir -p docs/archive
+mkdir -p records/decisions
+mkdir -p .claude
 ```
 
-### 2.4 App Health Check
+### 2.2 Move Code to apps/
 
-Each app MUST have:
-- [ ] Package file (package.json, Cargo.toml, etc.)
-- [ ] README.md (create if missing)
-- [ ] Entry point (src/index.*, main.*, etc.)
+```bash
+# Example: Move src/ to apps/core/
+mkdir -p apps/core
+mv src/ apps/core/
+mv lib/ apps/core/
+mv index.ts apps/core/
 
-**Create missing essentials:**
+# Move associated config
+mv tsconfig.json apps/core/
+mv .eslintrc.js apps/core/
+mv jest.config.js apps/core/
+```
+
+### 2.3 Move DevOps to apps/devops/
+
+```bash
+# Docker files
+mv Dockerfile apps/devops/docker/
+mv docker-compose*.yml apps/devops/docker/
+
+# Environment files
+mv .env* apps/devops/env/
+
+# Create .env.example if not exists
+touch apps/devops/env/.env.example
+```
+
+### 2.4 Delete Regenerable Files
+
+```bash
+# Remove deps (will be regenerated)
+rm -rf node_modules/
+rm -f package-lock.json yarn.lock pnpm-lock.yaml
+rm -rf .pnpm-store/ .yarn/
+```
+
+### 2.5 Archive Legacy Docs
+
+```bash
+mv CHANGELOG.md docs/archive/
+mv CONTRIBUTING.md docs/archive/
+mv old-notes.md docs/archive/
+```
+
+---
+
+## Phase 3: Setup apps/devops/
+
+### 3.1 Create apps/devops/ Structure
+
+```
+apps/devops/
+├── docker/
+│   ├── docker-compose.yml      # Main compose (orchestrates all apps)
+│   ├── docker-compose.dev.yml  # Dev overrides
+│   ├── docker-compose.prod.yml # Prod overrides
+│   └── Dockerfile.base         # Shared base image (optional)
+├── env/
+│   ├── .env.example            # Template for all env vars
+│   ├── .env.dev                # Dev defaults (no secrets)
+│   └── .env.prod.example       # Prod template (no secrets)
+├── scripts/
+│   ├── setup.sh                # Initial setup script
+│   ├── dev.sh                  # Start dev environment
+│   └── deploy.sh               # Deployment script
+├── package.json                # For any Node.js tooling
+└── README.md                   # DevOps documentation
+```
+
+### 3.2 Create docker-compose.yml
+
+```yaml
+# apps/devops/docker/docker-compose.yml
+version: '3.8'
+
+services:
+  # Add services based on detected apps
+  # Example:
+  api:
+    build:
+      context: ../../api
+      dockerfile: Dockerfile
+    env_file:
+      - ../env/.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../api:/app
+      - /app/node_modules
+
+  web:
+    build:
+      context: ../../web
+      dockerfile: Dockerfile
+    env_file:
+      - ../env/.env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../../web:/app
+      - /app/node_modules
+```
+
+### 3.3 Create apps/devops/README.md
+
+```markdown
+# DevOps
+
+Infrastructure and deployment configuration for the project.
+
+## Quick Start
+
+From project root:
+```bash
+make up      # Start all services
+make down    # Stop all services
+make logs    # View logs
+```
+
+## Structure
+
+- `docker/` - Docker Compose configurations
+- `env/` - Environment variable templates
+- `scripts/` - Automation scripts
+
+## Environment Variables
+
+Copy the example file and fill in values:
+```bash
+cp apps/devops/env/.env.example apps/devops/env/.env
+```
+
+## Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| api | 3000 | Backend API |
+| web | 5173 | Frontend app |
+```
+
+---
+
+## Phase 4: Apps Validation
+
+### 4.1 Identify All Apps
+
+```bash
+ls -d apps/*/ 2>/dev/null
+```
+
+### 4.2 Validate Each App
+
+Each app in `apps/` (except devops) MUST have:
+- [ ] `package.json` (or equivalent)
+- [ ] `README.md`
+- [ ] `src/` or entry point
+
+### 4.3 Create Missing Essentials
+
 ```
 📦 App: apps/api/
 
-Missing files:
+Missing:
 ├── ❌ README.md
-└── ✅ package.json
 
 Create README.md? [Y/n]
 ```
 
 ---
 
-## Phase 3: Clean Old Documentation
+## Phase 5: Create Workflow Documents
 
-### 3.1 Detect Old/Conflicting Docs
+### 5.1 Create Root Makefile
 
-```bash
-# Find existing docs that may conflict
-ls -la README.md CONTRIBUTING.md docs/*.md 2>/dev/null
-find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.git/*"
-```
+```makefile
+# Makefile - Project orchestration
 
-### 3.2 User Confirmation for Cleanup
+.PHONY: help up down logs build test lint
 
-> ⚠️ **MANDATORY**: List ALL files to be modified/deleted
+help:
+	@echo "Available commands:"
+	@echo "  make up       - Start all services"
+	@echo "  make down     - Stop all services"
+	@echo "  make logs     - View logs (use app=api for specific)"
+	@echo "  make build    - Build all apps"
+	@echo "  make test     - Run all tests"
+	@echo "  make lint     - Lint all apps"
 
-```
-📄 DOCUMENTATION CLEANUP
+# DevOps commands (delegate to apps/devops)
+up:
+	cd apps/devops/docker && docker-compose up -d
 
-Found existing documentation:
+down:
+	cd apps/devops/docker && docker-compose down
 
-TO REPLACE (workflow docs):
-├── docs/PROJECT.md → Will be regenerated
-├── docs/ARCHITECTURE.md → Will be regenerated
-└── CLAUDE.md → Will be regenerated
+logs:
+	cd apps/devops/docker && docker-compose logs -f $(app)
 
-TO REVIEW (may contain valuable info):
-├── README.md → Merge into new docs?
-├── docs/old-spec.md → Archive or delete?
-└── CONTRIBUTING.md → Keep or regenerate?
+# Build commands
+build:
+	@for dir in apps/*/; do \
+		if [ -f "$$dir/package.json" ] && [ "$${dir}" != "apps/devops/" ]; then \
+			echo "Building $$dir..."; \
+			cd "$$dir" && npm run build && cd ../..; \
+		fi \
+	done
 
-For each file marked "TO REVIEW":
-1. Merge - Extract content into new workflow docs
-2. Archive - Move to docs/archive/
-3. Delete - Remove completely
-4. Keep - Leave as-is
+# Test commands
+test:
+	@for dir in apps/*/; do \
+		if [ -f "$$dir/package.json" ] && [ "$${dir}" != "apps/devops/" ]; then \
+			echo "Testing $$dir..."; \
+			cd "$$dir" && npm test && cd ../..; \
+		fi \
+	done
 
-Please confirm each action.
-```
+# Per-app commands
+test-%:
+	cd apps/$* && npm test
 
-**Archive old docs instead of deleting when possible:**
-```bash
-mkdir -p docs/archive
-mv docs/old-spec.md docs/archive/
-```
+lint-%:
+	cd apps/$* && npm run lint
 
----
-
-## Phase 4: Deep Project Analysis
-
-### 4.1 Scan Apps
-
-For each app, analyze:
-
-```bash
-# Read main package file
-cat apps/*/package.json
-
-# Understand structure
-tree apps/*/ -L 2 -I 'node_modules|dist|build'
-
-# Find entry points
-ls apps/*/src/index.* apps/*/src/main.*
-```
-
-### 4.2 Understand the Application
-
-**Actively read source code to understand:**
-- What does each app do?
-- Who are the users?
-- What are the main features?
-- What's the architecture?
-- What external services are used?
-
----
-
-## Phase 5: Create Workflow Structure
-
-### 5.1 Create Directories
-
-```bash
-mkdir -p docs/backlog/functional
-mkdir -p docs/backlog/technical
-mkdir -p docs/backlog/ux
-mkdir -p docs/sprints
-mkdir -p docs/architecture
-mkdir -p records/decisions
-mkdir -p .claude
+build-%:
+	cd apps/$* && npm run build
 ```
 
 ### 5.2 Create Workflow Documents
 
-Create these files with detected information:
-
 | File | Content |
 |------|---------|
-| `docs/PROJECT.md` | Vision, objectives, constraints (from analysis) |
+| `docs/PROJECT.md` | Vision, objectives (from analysis) |
 | `docs/PERSONAS.md` | Users deduced from code |
 | `docs/UX.md` | UI/UX analysis |
 | `docs/STACK.md` | Detected tech stack |
 | `.claude/repos.json` | Git conventions |
 | `CLAUDE.md` | Entry point |
 
-### 5.3 Root package.json (Workspace Only)
-
-If root has package.json, ensure it's workspace-only:
+### 5.3 Create/Update package.json (Workspace Only)
 
 ```json
 {
@@ -265,41 +431,39 @@ If root has package.json, ensure it's workspace-only:
   "private": true,
   "workspaces": ["apps/*"],
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "test": "turbo test"
+    "dev": "make up",
+    "build": "make build",
+    "test": "make test"
   }
 }
 ```
 
-**No dependencies at root level** (except workspace tools like turbo, nx).
-**No packages/ or shared/** - if shared code is needed, create an app in `apps/`.
+**Rules:**
+- ❌ No `dependencies` at root
+- ❌ No `devDependencies` at root (except workspace tools)
+- ✅ Only workspace configuration
 
 ---
 
 ## Phase 6: Generate Initial Backlog (if --full)
 
-### 6.1 Technical Debt → TS-XXX
+### 6.1 Technical Stories (TS-XXX)
 
-Scan for:
-- TODO/FIXME comments
+- TODO/FIXME comments found
 - Outdated dependencies
 - Missing tests
-- Security issues
+- Missing Dockerfiles in apps
 
-### 6.2 Missing Features → US-XXX
+### 6.2 User Stories (US-XXX)
 
-Based on:
+- Incomplete features
 - Stubbed functions
-- Empty handlers
-- Commented code
 
-### 6.3 UX Improvements → UX-XXX
+### 6.3 DevOps Stories (TS-XXX)
 
-If frontend exists:
-- Accessibility issues
-- Missing responsive design
-- UI inconsistencies
+- Missing CI/CD pipelines
+- No staging environment
+- Missing health checks
 
 ---
 
@@ -310,21 +474,24 @@ If frontend exists:
 ```
 ✅ PILOT REPO VALIDATION
 
-Root level files:
-├── ✅ docs/ (workflow documentation)
-├── ✅ records/ (decisions)
-├── ✅ .claude/ (config)
-├── ✅ CLAUDE.md (entry point)
-├── ✅ README.md (project overview)
-├── ✅ Makefile (commands)
-├── ⚠️ package.json (workspace only - no deps)
-├── ❌ No src/ at root
-├── ❌ No lib/ at root
-└── ❌ No code files (*.ts, *.js, etc.)
+Root (whitelist only):
+├── ✅ apps/
+├── ✅ docs/
+├── ✅ records/
+├── ✅ .claude/
+├── ✅ .git/
+├── ✅ .gitignore
+├── ✅ CLAUDE.md
+├── ✅ README.md
+├── ✅ Makefile
+├── ✅ LICENSE (if exists)
+├── ⚠️ package.json (workspace only)
+└── ❌ Nothing else at root
 
 Apps:
-├── ✅ apps/api/ (has package.json, README)
-└── ✅ apps/web/ (has package.json, README)
+├── ✅ apps/devops/ (docker, env, scripts)
+├── ✅ apps/api/ (package.json, README)
+└── ✅ apps/web/ (package.json, README)
 ```
 
 ### 7.2 Summary Report
@@ -333,30 +500,30 @@ Apps:
 ✅ Project Onboarded: [name]
 
 🧹 Cleanup Performed:
-├── Moved: src/ → apps/core/
-├── Archived: docs/old-spec.md → docs/archive/
-└── Created: apps/api/README.md
+├── Moved: src/, lib/ → apps/core/
+├── Moved: Dockerfile, docker-compose.yml → apps/devops/docker/
+├── Moved: .env* → apps/devops/env/
+├── Deleted: node_modules/, package-lock.json
+├── Archived: CHANGELOG.md → docs/archive/
+└── Created: apps/devops/README.md
 
-📁 Structure Created:
-├── docs/
-│   ├── PROJECT.md (vision & objectives)
-│   ├── PERSONAS.md (user profiles)
-│   ├── UX.md (design direction)
-│   ├── STACK.md (tech documentation)
-│   └── backlog/ (story structure)
+📁 Final Structure:
+├── apps/
+│   ├── devops/ (docker, env, scripts)
+│   ├── api/
+│   └── web/
+├── docs/ (PROJECT, PERSONAS, UX, STACK, backlog/)
 ├── records/decisions/
-├── .claude/repos.json (git conventions)
-└── CLAUDE.md (quick reference)
-
-📦 Apps Validated:
-├── apps/api/ ✅
-└── apps/web/ ✅
+├── .claude/
+├── CLAUDE.md
+├── README.md
+└── Makefile
 
 📊 Analysis:
+├── Apps: 3 (devops, api, web)
 ├── Tech: [stack summary]
 ├── Git Flow: [detected]
-├── Features: [count] identified
-└── Tech Debt: [count] items found
+└── Tech Debt: [count] items
 ```
 
 ---
@@ -364,40 +531,22 @@ Apps:
 ## Phase 8: Commit and Create PR
 
 ```bash
-# Stage all changes
 git add .
 
-# Create commit
 git commit -m "tech: onboard project to claude-flow workflow
 
-- Clean pilot repo (docs only, no code)
-- Validate apps/ structure
+- Clean pilot repo (whitelist approach)
+- Create apps/devops/ for Docker and environment management
+- Move all code to apps/
 - Add docs/ structure (PROJECT, PERSONAS, UX, STACK)
-- Add backlog structure (functional/, technical/, ux/)
-- Add .claude/repos.json with detected Git conventions
-- Create CLAUDE.md entry point
+- Add backlog structure
+- Create root Makefile for orchestration
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
 
-# Push branch
 git push -u origin tech/onboard-workflow
-```
-
-**Propose PR:**
-```
-📝 Ready to create PR?
-
-Branch: tech/onboard-workflow → main
-Title: "tech: onboard project to claude-flow workflow"
-
-This PR:
-- Cleans the pilot repo structure
-- Validates all apps in apps/
-- Adds complete workflow documentation
-
-⚠️ Review carefully before merging - structural changes included.
 ```
 
 ---
@@ -406,22 +555,22 @@ This PR:
 
 | Rule | Enforcement |
 |------|-------------|
-| No code at root | ❌ Block if found, require move to apps/ |
-| No packages/shared | ❌ All code in apps/, no shared packages |
-| User confirmation | ⚠️ MANDATORY for all destructive actions |
-| App validation | ✅ Each app must have package file + README |
-| Archive over delete | 📁 Prefer docs/archive/ over deletion |
-| Clean = like /init | 🎯 Final state must match fresh init |
+| Whitelist only at root | ❌ Everything else must move/delete |
+| DevOps in apps/devops/ | 🐳 Docker, .env, scripts centralized |
+| No deps at root | 🗑️ Delete node_modules, lock files |
+| User confirmation | ⚠️ MANDATORY for all actions |
+| Archive over delete | 📁 Prefer docs/archive/ for docs |
+| Clean = like /init | 🎯 Final state identical to fresh init |
 
 ---
 
-## Comparison with /init
+## apps/devops/ Manages
 
-| Aspect | /init | /onboard |
-|--------|-------|----------|
-| Starting point | Empty | Existing code |
-| Information source | User answers | Code analysis |
-| Code location | Created in apps/ | Validated/moved to apps/ |
-| Pilot repo | Clean from start | Cleaned during process |
-| User interaction | Questionnaires | Confirmations for changes |
-| End result | **IDENTICAL** | **IDENTICAL** |
+| What | Location | Purpose |
+|------|----------|---------|
+| Docker Compose | `docker/` | Orchestrate all apps locally |
+| Dockerfiles | `docker/` or per-app | Build images |
+| Environment vars | `env/` | Templates and defaults |
+| Scripts | `scripts/` | Automation (setup, deploy) |
+| CI/CD configs | Here or `.github/` | Pipelines |
+| Terraform/K8s | `infra/` (optional) | Cloud infrastructure |

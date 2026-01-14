@@ -35,19 +35,25 @@ Claude: [Creates structure]
         [Creates PR → main]
 
 Output:
-├── docs/PROJECT.md
-├── docs/PERSONAS.md
-├── docs/UX.md
-├── docs/STACK.md
-├── docs/backlog/functional/US-001.md ... US-012.md
+├── apps/
+│   └── devops/ (docker, env, scripts)
+├── docs/
+│   ├── PROJECT.md
+│   ├── PERSONAS.md
+│   ├── UX.md
+│   ├── STACK.md
+│   └── backlog/functional/US-001.md ... US-012.md
 ├── docs/sprints/SPRINT-001.md
+├── .gitignore
 ├── CLAUDE.md
-└── Makefile
+├── Makefile
+└── package.json (workspace only)
 
 Branch: tech/init-project → main (PR)
 ```
 
 > ⚠️ Changes are on a dedicated branch. Merge the PR after reviewing the structure.
+> 🐳 apps/devops/ is always created with Docker, env, and scripts folders.
 
 ---
 
@@ -61,7 +67,7 @@ Branch: tech/init-project → main (PR)
 /onboard --full       # Full onboarding with backlog generation
 ```
 
-**Core Principle**: Pilot repo must be CLEAN - docs only, all code in `apps/`.
+**Core Principle**: Whitelist approach - only specific files allowed at root.
 
 **Flow**:
 ```
@@ -69,60 +75,58 @@ User: /onboard
 
 Claude: [Creates branch: tech/onboard-workflow]
 
-        "🔍 Pilot Repo Audit
-         ❌ VIOLATIONS FOUND:
-         ├── src/index.ts (code at root)
-         └── package.json (not workspace-only)
+        "🔍 ROOT CLEANUP REPORT
 
-         Move src/ to apps/[name]? [Y/n]"
+         ✅ WHITELIST (keep): .git/, README.md, LICENSE
 
-User: "Y, call it 'core'"
+         🚚 CODE → apps/core/: src/, lib/, index.ts
+         🐳 DEVOPS → apps/devops/: Dockerfile, docker-compose.yml, .env*
+         ⚙️ CONFIG → move with code: tsconfig.json, .eslintrc
+         🗑️ DELETE (regenerable): node_modules/, package-lock.json
+         📦 ARCHIVE → docs/archive/: CHANGELOG.md
 
-Claude: [Moves src/ → apps/core/]
-        [Validates apps/core/ has package.json, README]
+         1. AUTO-CLEAN (recommended)
+         2. REVIEW ONE BY ONE
+         3. SKIP"
 
-        "📦 App: apps/api/
-         Missing .git directory.
-         1. Initialize git (independent repo)
-         2. Keep as monorepo subfolder"
+User: "1"
 
-User: "2"
-
-Claude: [Keeps as monorepo]
-        [Scans and analyzes all apps]
+Claude: [Creates apps/devops/ structure]
+        [Moves code to apps/core/]
+        [Moves Docker/.env to apps/devops/]
+        [Deletes node_modules/]
+        [Archives old docs]
         [Creates workflow docs from analysis]
         [Commits on tech/onboard-workflow]
         [Creates PR → main]
 
 Output (CLEAN pilot repo):
-├── docs/
-│   ├── PROJECT.md
-│   ├── PERSONAS.md
-│   ├── UX.md
-│   ├── STACK.md
-│   └── backlog/
+├── apps/
+│   ├── devops/ (docker/, env/, scripts/)
+│   ├── core/ (moved from root)
+│   └── api/
+├── docs/ (PROJECT, PERSONAS, UX, STACK, backlog/)
 ├── records/decisions/
-├── .claude/repos.json
+├── .claude/
+├── .gitignore
 ├── CLAUDE.md
 ├── README.md
 ├── Makefile
-└── package.json (workspace only!)
-
-Apps validated:
-├── apps/core/ ✅
-└── apps/api/ ✅
+└── package.json (workspace only)
 
 Branch: tech/onboard-workflow → main (PR)
 ```
 
 **Key Rules**:
-- ❌ No code at root (must move to apps/)
-- ❌ No packages/ or shared/ (all code in apps/)
-- ⚠️ User confirmation required for ALL changes
-- 📁 Archive old docs instead of deleting
+- ✅ Whitelist approach: only allowed files stay at root
+- 🐳 DevOps files → apps/devops/ (Docker, .env, scripts)
+- 🚚 Code files → apps/[name]/
+- 🗑️ Regenerable files deleted (node_modules, locks)
+- 📁 Legacy docs archived to docs/archive/
+- ⚠️ User confirmation MANDATORY for all actions
 - 🎯 End result identical to fresh /init
 
-> ⚠️ Review carefully - structural changes may be included in PR.
+> ⚠️ Review carefully - structural changes included.
 
 ---
 
@@ -318,15 +322,41 @@ Claude: [Checks all stories Done]
 
 ### /env - Environment Management
 
-**Purpose**: Deploy and manage environments.
+**Purpose**: Manage local and remote environments using apps/devops/.
 
 **Usage**:
 ```bash
 /env                          # Show all status
+/env local                    # Start local dev (docker-compose)
+/env local down               # Stop local dev
 /env deploy api staging       # Deploy to staging
 /env deploy api production    # Deploy to prod (confirmation)
 /env logs api staging         # View logs
 /env rollback api staging     # Rollback
+```
+
+**Local Development Flow**:
+```
+User: /env local
+
+Claude: [Runs: cd apps/devops/docker && docker-compose up -d]
+
+        "📊 Local Environment Started
+
+         LOCAL (apps/devops/docker)
+         ├── api:  running ✅ (localhost:3000)
+         ├── web:  running ✅ (localhost:5173)
+         └── db:   running ✅ (localhost:5432)
+
+         Use 'make logs' to view logs
+         Use '/env local down' to stop"
+```
+
+**Makefile Integration**:
+```bash
+make up       # → cd apps/devops/docker && docker-compose up -d
+make down     # → cd apps/devops/docker && docker-compose down
+make logs     # → cd apps/devops/docker && docker-compose logs -f
 ```
 
 ---
