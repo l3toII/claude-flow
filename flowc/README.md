@@ -2,6 +2,8 @@
 
 A complete development workflow plugin for Claude Code. Manage stories, sprints, commits, PRs, releases, and environments — with anti-vibe-code guards.
 
+> **Documentation complète** : Voir [doc/GUIDE.md](doc/GUIDE.md) pour le guide détaillé.
+
 ## Installation
 
 ```bash
@@ -37,6 +39,7 @@ A complete development workflow plugin for Claude Code. Manage stories, sprints,
 | `/onboard` | Onboard existing codebase |
 | `/debt` | Track technical debt |
 | `/decision` | Architectural decisions (ADRs) |
+| `/apps` | Manage apps in monorepo |
 | `/bye` | End session gracefully |
 
 ## Agents
