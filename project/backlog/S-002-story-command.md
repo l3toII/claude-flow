@@ -2,7 +2,7 @@
 id: S-002
 title: Implémenter /story avec clarification interactive
 type: feature
-status: ready
+status: done
 sprint: sprint-00
 created: 2025-01-15
 ---
