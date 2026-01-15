@@ -1,0 +1,68 @@
+{
+  "project": {
+    "name": "claude-plugins",
+    "repo": "l3toII/claude-plugins",
+    "type": "tooling",
+    "description": "Claude Code plugins collection"
+  },
+  "apps": {
+    "flowc": {
+      "path": "apps/flowc",
+      "type": "claude-plugin",
+      "repo": "l3toII/flowc",
+      "version": "0.1.0",
+      "description": "Development workflow plugin for Claude Code"
+    }
+  },
+  "git": {
+    "principal": {
+      "main_branch": "main",
+      "flow_type": "github-flow",
+      "protected_branches": ["main"],
+      "merge_strategy": "squash"
+    },
+    "defaults": {
+      "commit_format": "conventional",
+      "branch_pattern": "type/#*-slug",
+      "merge_strategy": "squash"
+    }
+  },
+  "quality": {
+    "flowc": {
+      "type": "claude-plugin",
+      "tests": {
+        "type": "manual",
+        "file": "test.md",
+        "required": true
+      },
+      "lint": {
+        "scripts": "shellcheck",
+        "markdown": "markdownlint",
+        "enforce": false
+      },
+      "coverage": {
+        "enforce": false
+      },
+      "build": {
+        "enforce": false
+      }
+    }
+  },
+  "guards": {
+    "story_required": true,
+    "secrets_warning": true,
+    "scope_creep_warning": true,
+    "quality_gates": true
+  },
+  "environments": {
+    "prod": {
+      "branch": "main",
+      "description": "main = prod (public repo, direct install)"
+    }
+  },
+  "release": {
+    "strategy": "tag",
+    "changelog": true,
+    "version_source": "tag"
+  }
+}
