@@ -38,7 +38,7 @@ Tests d'acceptation pour valider les stories du sprint 00.
 | 7 | architect-agent lancé | (suite de 6) | Agent propose 2-3 options d'architecture | [ ] |
 | 8 | User choisit architecture | (suite de 7) | Claude attend le choix avant d'implémenter | [ ] |
 | 9 | TDD respecté | (après choix) | Claude écrit test d'abord (RED), puis code (GREEN) | [ ] |
-| 10 | review-agent lancé | (fin implémentation) | Agent review le code, retourne issues/verdict | [ ] |
+| 10 | Fin implémentation | (après TDD) | Message "Testez manuellement, puis /done" | [ ] |
 | 11 | Option --app | `/work S-XXX --app api` | Ticket créé dans repo api (multi-app) | [ ] |
 | 12 | Plugin mode | `/work S-XXX` (ce repo) | Pas de ticket GitHub, branche depuis ID story | [ ] |
 
@@ -46,7 +46,18 @@ Tests d'acceptation pour valider les stories du sprint 00.
 
 | # | Test | Commande | Résultat attendu | Status |
 |---|------|----------|------------------|--------|
-| 1 | TBD | | | [ ] |
+| 1 | Dirty files détectés | `/done` (avec fichiers non commités) | Analyse + demande user (commit/ignore/abort) | [ ] |
+| 2 | Working tree propre | `/done` (tout commité) | Passe directement à review | [ ] |
+| 3 | review-agent lancé | (suite de 2) | Agent review les fichiers modifiés | [ ] |
+| 4 | Quality gates (app) | `/done` (dans app code) | Tests + lint + coverage en parallèle | [ ] |
+| 5 | Quality gates skip (plugin) | `/done` (dans plugin) | Pas de quality gates, juste review-agent | [ ] |
+| 6 | Issues critiques bloquent | (review avec issues critiques) | PR non créée, suggestions de fix affichées | [ ] |
+| 7 | PR créée | (review OK) | `gh pr create` avec template rempli | [ ] |
+| 8 | Template PR | (suite de 7) | Summary (story) + Changes (commits) + Test Plan (critères) | [ ] |
+| 9 | Closes ticket | (suite de 7) | `Closes #XX` dans le body | [ ] |
+| 10 | Session updated | (suite de 7) | `status: review`, `pr_url`, `pr_created_at` | [ ] |
+| 11 | Lien PR affiché | (suite de 7) | URL de la PR affichée à la fin | [ ] |
+| 12 | Message next step | (suite de 11) | "review par l'équipe, puis /sync après merge" | [ ] |
 
 ## Résumé
 
@@ -54,7 +65,7 @@ Tests d'acceptation pour valider les stories du sprint 00.
 |-------|-------|--------|---------|
 | S-002 | 12 | 0 | 0 |
 | S-003 | 12 | 0 | 0 |
-| S-004 | - | - | - |
+| S-004 | 12 | 0 | 0 |
 
 ## Notes
 

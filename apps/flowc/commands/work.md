@@ -42,12 +42,10 @@ Configure la session, explore le codebase, propose l'architecture, puis Claude i
     │   ├── User choisit l'approche
     │   └── Valide avant implémentation
     │
-    ├── 5. Implémentation (Claude)
-    │   ├── TDD: RED → GREEN → REFACTOR
-    │   └── Respecte l'architecture choisie
-    │
-    └── 6. Review (review-agent)
-        └── Vérifie qualité avant /done
+    └── 5. Implémentation (Claude)
+        ├── TDD: RED → GREEN → REFACTOR
+        ├── Respecte l'architecture choisie
+        └── User teste manuellement, puis /done
 ```
 
 ## Agents
@@ -56,9 +54,9 @@ Configure la session, explore le codebase, propose l'architecture, puis Claude i
 |-------|-------|------|
 | `explore-agent` | 3 | Explore codebase, trouve patterns |
 | `architect-agent` | 4 | Propose options d'architecture |
-| `review-agent` | 6 | Review qualité avant finalisation |
 
 **Claude implémente** (phase 5). Les agents l'assistent.
+**review-agent** est appelé par `/done`, après les tests manuels de l'utilisateur.
 
 ## Session.json
 
@@ -121,12 +119,8 @@ Claude:
 
   [... continue TDD ...]
 
-  ## Phase 6: Review
-  → Lance review-agent
-
-  [review-agent valide, aucune issue critique]
-
-  ✓ Prêt pour /done
+  ✓ Implémentation terminée
+  → Testez manuellement, puis /done pour créer la PR
 ```
 
 ## Options
@@ -149,7 +143,7 @@ Claude:
 2. **Exploration d'abord** : Toujours comprendre avant de coder
 3. **Architecture validée** : User choisit l'approche
 4. **TDD obligatoire** : Sauf plugins markdown
-5. **Review avant /done** : Qualité vérifiée
+5. **Test manuel** : User teste avant /done
 
 ## Fichiers
 

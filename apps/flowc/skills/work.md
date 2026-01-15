@@ -1,11 +1,11 @@
 ---
 name: work
-description: Orchestrates /work command. Runs explore-agent, architect-agent, then Claude implements with TDD, finally review-agent.
+description: Orchestrates /work command. Runs explore-agent, architect-agent, then Claude implements with TDD.
 ---
 
 # Work Skill
 
-Orchestre la commande `/work`. Lance explore-agent, architect-agent, puis Claude implémente en TDD, enfin review-agent.
+Orchestre la commande `/work`. Lance explore-agent, architect-agent, puis Claude implémente en TDD.
 
 ## Déclenchement
 
@@ -30,10 +30,8 @@ Invoqué par `/work S-XXX` après validation du guard (story must be ready).
     ├── 4. architect-agent (OBLIGATOIRE)
     │   └── Choisir l'approche
     │
-    ├── 5. Claude implémente (TDD)
-    │
-    └── 6. review-agent (OBLIGATOIRE)
-        └── Valider la qualité
+    └── 5. Claude implémente (TDD)
+        └── User teste manuellement, puis /done
 ```
 
 ## Phase 1-2 : Setup
@@ -136,23 +134,6 @@ Pour les plugins Claude (markdown) :
 - Pas de tests unitaires
 - Documenter tests manuels dans `test.md`
 
-## Phase 6 : review-agent
-
-**OBLIGATOIRE** - Toujours review avant de finaliser.
-
-```
-Lance review-agent avec:
-  Review: [fichiers créés/modifiés]
-  Contexte: [ce qui a été implémenté]
-```
-
-Attendre le retour :
-- Issues critiques (à corriger)
-- Issues importantes (à évaluer)
-- Verdict (bloquant ou prêt)
-
-**Si issues critiques** : Corriger avant de continuer.
-
 ## Détection du contexte
 
 ### Plugin Claude
@@ -211,10 +192,6 @@ REFACTOR: ...
 
 [Continue...]
 
-## Phase 6: Review
-→ Lance review-agent...
-
-[Résultat review]
-
-✓ Prêt pour /done
+✓ Implémentation terminée
+→ Testez manuellement, puis /done pour créer la PR
 ```
