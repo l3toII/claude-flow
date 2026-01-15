@@ -2,7 +2,7 @@
 id: S-003
 title: Implémenter /work basique
 type: feature
-status: ready
+status: done
 sprint: sprint-00
 created: 2025-01-15
 ---
@@ -11,13 +11,13 @@ created: 2025-01-15
 
 ## Contexte
 
-Après avoir créé une story avec `/story`, l'utilisateur doit pouvoir démarrer le travail dessus. La commande `/work` initialise l'environnement de travail et prépare un plan d'implémentation.
+Après avoir créé une story avec `/story`, l'utilisateur doit pouvoir démarrer le travail dessus. La commande `/work` initialise l'environnement de travail, explore le codebase, propose des options d'architecture, puis Claude implémente en TDD.
 
 ## Objectif
 
 En tant que développeur,
 je veux lancer `/work S-XXX` pour démarrer le travail sur une story
-afin d'avoir ma session configurée et un plan d'implémentation proposé.
+afin d'avoir ma session configurée, le contexte exploré, et une architecture validée avant d'implémenter.
 
 ## Description
 
@@ -28,8 +28,10 @@ La commande `/work` doit :
    - Créer/mettre à jour `.claude/session.json`
    - Passer la story en status `active`
 3. **Créer la branche** : `feature/#XXX-slug` depuis main
-4. **Créer le ticket GitHub** : Dans le repo de l'app (ou repo principal si mono-app)
-5. **Proposer un plan** : Dev Agent analyse les acceptance criteria et propose l'implémentation
+4. **Explorer** : `explore-agent` analyse le codebase existant
+5. **Architecturer** : `architect-agent` propose 2-3 options, user choisit
+6. **Implémenter** : Claude code en TDD
+7. **Review** : `review-agent` vérifie la qualité
 
 ### Mono-app vs Multi-app
 
@@ -40,23 +42,26 @@ La commande `/work` doit :
 
 ## Critères d'acceptation
 
-- [ ] `/work S-XXX` démarre une session de travail
-- [ ] Guard bloque si story pas `ready` avec message clair
-- [ ] Crée la branche `feature/#XXX-slug` depuis main
-- [ ] Met à jour la story en status `active`
-- [ ] Crée/met à jour `.claude/session.json` avec :
+- [x] `/work S-XXX` démarre une session de travail
+- [x] Guard bloque si story pas `ready` avec message clair
+- [x] Crée la branche `feature/#XXX-slug` depuis main
+- [x] Met à jour la story en status `active`
+- [x] Crée/met à jour `.claude/session.json` avec :
   - `active_story`: S-XXX
   - `active_app`: nom de l'app (auto-détecté ou via --app)
-  - `active_ticket`: repo#XX
+  - `active_ticket`: repo#XX (si multi-app)
   - `branch`: feature/#XXX-slug
   - `started_at`: timestamp
   - `status`: working
   - `current_sprint`: sprint-XX
-- [ ] Crée ticket GitHub dans le repo approprié
-- [ ] Met à jour la table Tickets dans la story
-- [ ] Dev Agent lit les acceptance criteria et l'architecture
-- [ ] Dev Agent propose un plan d'implémentation avant de coder
-- [ ] Option `--app` pour projets multi-app
+- [x] Crée ticket GitHub dans le repo approprié (multi-app seulement)
+- [x] Met à jour la table Tickets dans la story (multi-app seulement)
+- [x] `explore-agent` analyse le codebase et retourne fichiers/patterns
+- [x] `architect-agent` propose 2-3 options d'architecture
+- [x] User valide l'architecture avant implémentation
+- [x] Claude implémente en TDD (RED → GREEN → REFACTOR)
+- [x] `review-agent` vérifie la qualité avant finalisation
+- [x] Option `--app` pour projets multi-app
 
 ## Hors scope
 
@@ -66,7 +71,7 @@ La commande `/work` doit :
 ## Questions résolues
 
 - Q: Format de branche ?
-  R: `feature/#XXX-slug` (où XXX = numéro du ticket créé)
+  R: `feature/#XXX-slug` (où XXX = ID story pour plugins, numéro ticket pour multi-app)
 
 - Q: Mono-app, comment détecter ?
   R: Si une seule app dans `apps/`, pas besoin de `--app`
@@ -74,31 +79,29 @@ La commande `/work` doit :
 - Q: Story pas ready ?
   R: Guard qui bloque avec message "utilise `/story` d'abord"
 
+- Q: Qui code ?
+  R: Claude code, les agents (explore, architect, review) l'assistent
+
 ## Notes techniques
 
-Fichiers à créer/modifier :
+Fichiers créés :
 - `apps/flowc/commands/work.md` - Définition de la commande
-- `apps/flowc/skills/dev-agent.md` - Skill du Dev Agent pour analyse et plan d'implémentation
+- `apps/flowc/skills/work.md` - Orchestration du flow
+- `apps/flowc/agents/explore-agent.md` - Exploration codebase
+- `apps/flowc/agents/architect-agent.md` - Options d'architecture
+- `apps/flowc/agents/review-agent.md` - Review qualité
+- `apps/flowc/hooks/guard-story-ready.sh` - Guard story ready
+- `apps/flowc/.claude/settings.json` - Configuration hook
 
-Dépendances :
-- `gh issue create` pour créer les tickets
-- Lecture de `.claude/flowc.json` pour config apps (si existe)
+### Flow des agents
 
-### Dev Agent
-
-Le Dev Agent est déclenché automatiquement après le setup technique. Il doit :
-
-1. **Lire le contexte** :
-   - Story complète (acceptance criteria, description, hors scope)
-   - Architecture de l'app (`engineering/apps/[name].md` si existe)
-   - Contraintes techniques (`engineering/` si existe)
-
-2. **Analyser** :
-   - Identifier les fichiers à créer/modifier
-   - Repérer les dépendances entre tâches
-   - Détecter les risques potentiels
-
-3. **Proposer un plan** :
-   - Liste ordonnée des étapes d'implémentation
-   - Pour chaque étape : fichiers concernés, ce qui sera fait
-   - Demander validation avant de commencer
+```
+/work S-XXX
+    │
+    ├── Guard (story ready?)
+    ├── Setup (session, branche)
+    ├── explore-agent → fichiers, patterns, conventions
+    ├── architect-agent → options, user choisit
+    ├── Claude implémente (TDD)
+    └── review-agent → qualité validée
+```

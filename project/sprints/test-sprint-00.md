@@ -29,7 +29,18 @@ Tests d'acceptation pour valider les stories du sprint 00.
 
 | # | Test | Commande | Résultat attendu | Status |
 |---|------|----------|------------------|--------|
-| 1 | TBD | | | [ ] |
+| 1 | Story not ready bloquée | `/work S-XXX` (draft) | Guard bloque avec message "utilise /story d'abord" | [ ] |
+| 2 | Story ready acceptée | `/work S-XXX` (ready) | Setup démarre | [ ] |
+| 3 | Session créée | (suite de 2) | `.claude/session.json` créé avec active_story, branch, etc. | [ ] |
+| 4 | Status updated | (suite de 2) | Story passe de `ready` à `active` | [ ] |
+| 5 | Branche créée | (suite de 2) | `git branch` montre `feature/#XXX-slug` | [ ] |
+| 6 | explore-agent lancé | (suite de 2) | Agent explore le codebase, retourne fichiers/patterns | [ ] |
+| 7 | architect-agent lancé | (suite de 6) | Agent propose 2-3 options d'architecture | [ ] |
+| 8 | User choisit architecture | (suite de 7) | Claude attend le choix avant d'implémenter | [ ] |
+| 9 | TDD respecté | (après choix) | Claude écrit test d'abord (RED), puis code (GREEN) | [ ] |
+| 10 | review-agent lancé | (fin implémentation) | Agent review le code, retourne issues/verdict | [ ] |
+| 11 | Option --app | `/work S-XXX --app api` | Ticket créé dans repo api (multi-app) | [ ] |
+| 12 | Plugin mode | `/work S-XXX` (ce repo) | Pas de ticket GitHub, branche depuis ID story | [ ] |
 
 ## S-004: /done basique
 
@@ -42,7 +53,7 @@ Tests d'acceptation pour valider les stories du sprint 00.
 | Story | Tests | Passés | Échoués |
 |-------|-------|--------|---------|
 | S-002 | 12 | 0 | 0 |
-| S-003 | - | - | - |
+| S-003 | 12 | 0 | 0 |
 | S-004 | - | - | - |
 
 ## Notes
