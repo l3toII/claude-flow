@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill(work:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/guard-story-ready.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}
